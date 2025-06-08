@@ -6,14 +6,12 @@ gantt.config.columns = [
   { name: "duration", label: "Длительность", align: "center" }
 ];
 
-
 gantt.types = {
   project: "project",
   phase: "phase",
   task: "task",
   assignment: "assignment"
 };
-
 
 gantt.getChildrenTypes = function(type) {
   switch(type) {
@@ -30,9 +28,7 @@ gantt.getChildrenTypes = function(type) {
   }
 };
 
-
 gantt.config.lightbox.sections = [];
-
 
 gantt.showLightbox = function(id) {
   const task = gantt.getTask(id);
@@ -105,7 +101,6 @@ gantt.showLightbox = function(id) {
   };
 };
 
-
 gantt.attachEvent("onBeforeTaskAdd", function(id, task) {
   const parent = gantt.getTask(task.parent);
   if (parent && parent.type === gantt.types.assignment) {
@@ -115,6 +110,17 @@ gantt.attachEvent("onBeforeTaskAdd", function(id, task) {
   return true;
 });
 
+
+gantt.attachEvent("onBeforeLinkAdd", function(id, link) {
+  const sourceTask = gantt.getTask(link.source);
+  const targetTask = gantt.getTask(link.target);
+
+  if (sourceTask.type === gantt.types.assignment || targetTask.type === gantt.types.assignment) {
+    alert("Связи с задачами типа Assignment запрещены");
+    return false;
+  }
+  return true;
+});
 
 gantt.init("gantt_here");
 
