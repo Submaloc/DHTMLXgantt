@@ -125,8 +125,30 @@ gantt.templates.task_class = function(start, end, task) {
 };
 
 
+let syncAssignmentsOnDrag = true;
+
+const toggleButton = document.createElement("button");
+toggleButton.textContent = "Assignment Sync: ON";
+toggleButton.style.position = "absolute";
+toggleButton.style.top = "10px";
+toggleButton.style.right = "10px";
+toggleButton.style.zIndex = 1001;
+toggleButton.style.padding = "5px 10px";
+toggleButton.style.background = "#007acc";
+toggleButton.style.color = "#fff";
+toggleButton.style.border = "none";
+toggleButton.style.borderRadius = "4px";
+toggleButton.style.cursor = "pointer";
+toggleButton.onclick = () => {
+  syncAssignmentsOnDrag = !syncAssignmentsOnDrag;
+  toggleButton.textContent = `Assignment Sync: ${syncAssignmentsOnDrag ? "ON" : "OFF"}`;
+};
+
+document.body.appendChild(toggleButton);
+
+
 gantt.attachEvent("onTaskDrag", function(id, mode, task, original) {
-  if (mode !== "move") return true;
+  if (!syncAssignmentsOnDrag || mode !== "move") return true;
 
   const diff = task.start_date - original.start_date;
 
