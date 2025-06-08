@@ -120,10 +120,27 @@ gantt.attachEvent("onBeforeLinkAdd", function(id, link) {
   return true;
 });
 
-
 gantt.templates.task_class = function(start, end, task) {
   return "type_" + task.type;
 };
+
+
+gantt.attachEvent("onTaskDrag", function(id, mode, task, original) {
+  if (mode !== "move") return true;
+
+  const diff = task.start_date - original.start_date;
+
+  if (task.type !== gantt.types.assignment) {
+    gantt.eachTask(function(child) {
+      if (child.type === gantt.types.assignment && gantt.isChildOf(child.id, task.id)) {
+        child.start_date = new Date(+child.start_date + diff);
+        gantt.updateTask(child.id);
+      }
+    });
+  }
+
+  return true;
+});
 
 gantt.init("gantt_here");
 
