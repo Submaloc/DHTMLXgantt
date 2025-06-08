@@ -1,0 +1,102 @@
+.type_project .gantt_task_progress {
+  background-color: #2a9d8f !important; 
+}
+
+.type_project .gantt_task_content {
+  background-color: #264653 !important; 
+}
+
+.type_phase .gantt_task_progress {
+  background-color: #e76f51 !important; 
+}
+
+.type_phase .gantt_task_content {
+  background-color: #f4a261 !important; 
+}
+
+.type_task .gantt_task_progress {
+  background-color: #0077b6 !important; 
+}
+
+.type_task .gantt_task_content {
+  background-color: #00b4d8 !important; 
+}
+
+.type_assignment .gantt_task_progress {
+  background-color: #8d99ae !important; 
+}
+
+.type_assignment .gantt_task_content {
+  background-color: #6c757d !important; 
+}
+
+.gantt_modal_box {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 24px 30px;
+  border-radius: 8px;
+  font-family: Arial, sans-serif;
+  width: 320px;
+  box-sizing: border-box;
+  z-index: 1000;
+}
+
+.gantt_modal_box label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.gantt_modal_box input[type="text"],
+.gantt_modal_box input[type="number"],
+.gantt_modal_box select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+  outline-offset: 2px;
+  transition: border-color 0.2s ease-in-out;
+}
+
+.gantt_modal_box input[type="text"]:focus,
+.gantt_modal_box input[type="number"]:focus,
+.gantt_modal_box select:focus {
+  border-color: #666;
+  outline: none;
+}
+
+.gantt_modal_box button {
+  padding: 10px 18px;
+  border: 1px solid #999;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  margin-right: 12px;
+}
+
+.gantt_modal_box button:hover {
+  background-color: #f0f0f0;
+  border-color: #666;
+}
+
+.gantt_modal_box button:focus {
+  outline: 2px solid #999;
+}
+
+.gantt_modal_box button:last-child {
+  margin-right: 0;
+}
+
+

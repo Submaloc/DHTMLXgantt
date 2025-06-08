@@ -51,16 +51,15 @@ gantt.showLightbox = function(id) {
   form.style.border = "1px solid #ccc";
   form.style.zIndex = 1000;
   form.style.padding = "20px";
-  form.innerHTML = `
-    <label>Тип:</label>
-    <select id="new_task_type">${typeOptions}</select><br><br>
+  form.innerHTML = 
+    `<label>Тип:</label>
+    <select id="new_task_type">${typeOptions}</select>
     <label>Название:</label>
-    <input type="text" id="new_task_text" style="width: 100%;"><br><br>
+    <input type="text" id="new_task_text" style="width: 100%;">
     <label>Длительность (часы):</label>
-    <input type="number" id="new_task_duration" value="8"><br><br>
+    <input type="number" id="new_task_duration" value="8">
     <button id="create_task_btn">Создать</button>
-    <button id="cancel_task_btn">Отмена</button>
-  `;
+    <button id="cancel_task_btn">Отмена</button>`;
 
   document.body.appendChild(form);
 
@@ -110,7 +109,6 @@ gantt.attachEvent("onBeforeTaskAdd", function(id, task) {
   return true;
 });
 
-
 gantt.attachEvent("onBeforeLinkAdd", function(id, link) {
   const sourceTask = gantt.getTask(link.source);
   const targetTask = gantt.getTask(link.target);
@@ -121,6 +119,11 @@ gantt.attachEvent("onBeforeLinkAdd", function(id, link) {
   }
   return true;
 });
+
+
+gantt.templates.task_class = function(start, end, task) {
+  return "type_" + task.type;
+};
 
 gantt.init("gantt_here");
 
