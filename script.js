@@ -32,14 +32,10 @@ gantt.config.lightbox.sections = [];
 
 gantt.showLightbox = function(id) {
   const task = gantt.getTask(id);
-
   if (task.type === gantt.types.assignment) return;
 
   const types = gantt.getChildrenTypes(task.type);
-
-  const typeOptions = types
-    .map(t => `<option value="${t}">${t.charAt(0).toUpperCase() + t.slice(1)}</option>`)
-    .join("");
+  const typeOptions = types.map(t => `<option value="${t}">${t.charAt(0).toUpperCase() + t.slice(1)}</option>`).join("");
 
   const form = document.createElement("div");
   form.className = "gantt_modal_box";
@@ -63,16 +59,7 @@ gantt.showLightbox = function(id) {
 
   document.body.appendChild(form);
 
-  const createBtn = form.querySelector("#create_task_btn");
-  const cancelBtn = form.querySelector("#cancel_task_btn");
-
-  const closeModal = () => {
-    if (form && form.parentNode) {
-      form.parentNode.removeChild(form);
-    }
-  };
-
-  createBtn.onclick = () => {
+  form.querySelector("#create_task_btn").onclick = () => {
     const type = form.querySelector("#new_task_type").value;
     const text = form.querySelector("#new_task_text").value;
     const duration = parseInt(form.querySelector("#new_task_duration").value) || 8;
@@ -92,12 +79,10 @@ gantt.showLightbox = function(id) {
     };
 
     gantt.addTask(newTask, id);
-    closeModal();
+    form.remove();
   };
 
-  cancelBtn.onclick = () => {
-    closeModal();
-  };
+  form.querySelector("#cancel_task_btn").onclick = () => form.remove();
 };
 
 gantt.attachEvent("onBeforeTaskAdd", function(id, task) {
@@ -124,7 +109,6 @@ gantt.templates.task_class = function(start, end, task) {
   return "type_" + task.type;
 };
 
-
 let syncAssignmentsOnDrag = true;
 
 const toggleButton = document.createElement("button");
@@ -143,7 +127,6 @@ toggleButton.onclick = () => {
   syncAssignmentsOnDrag = !syncAssignmentsOnDrag;
   toggleButton.textContent = `Assignment Sync: ${syncAssignmentsOnDrag ? "ON" : "OFF"}`;
 };
-
 document.body.appendChild(toggleButton);
 
 
@@ -164,6 +147,52 @@ gantt.attachEvent("onTaskDrag", function(id, mode, task, original) {
   return true;
 });
 
+
+const convertButton = document.createElement("button");
+convertButton.textContent = "Преобразовать baseline";
+convertButton.style.position = "absolute";
+convertButton.style.top = "50px";
+convertButton.style.right = "10px";
+convertButton.style.zIndex = 1001;
+convertButton.style.padding = "5px 10px";
+convertButton.style.background = "#28a745";
+convertButton.style.color = "#fff";
+convertButton.style.border = "none";
+convertButton.style.borderRadius = "4px";
+convertButton.style.cursor = "pointer";
+convertButton.onclick = () => {
+  const tasks = gantt.getTaskByTime();
+
+  tasks.forEach(task => {
+    if (task.baselines && task.baselines.length) {
+      const oldTaskId = task.id;
+
+      
+      task.type = gantt.types.project;
+      gantt.updateTask(oldTaskId);
+
+      
+      task.baselines.forEach(b => {
+        const newTask = {
+          id: gantt.uid(),
+          text: b.text,
+          type: gantt.types.task,
+          start_date: b.start_date,
+          duration: b.duration,
+          parent: oldTaskId
+        };
+        gantt.addTask(newTask);
+      });
+
+      delete task.baselines;
+    }
+  });
+
+  gantt.message("Преобразование завершено");
+};
+document.body.appendChild(convertButton);
+
+
 gantt.init("gantt_here");
 
 gantt.parse({
@@ -175,7 +204,17 @@ gantt.parse({
       id: 2, text: "Дизайн UI/UX", type: "phase", start_date: "2025-06-01", duration: 5, parent: 1, open: true
     },
     {
-      id: 3, text: "Создать макеты экрана входа", type: "task", start_date: "2025-06-01", duration: 2, parent: 2, open: true
+      id: 3,
+      text: "Создать макеты экрана входа",
+      type: "task",
+      start_date: "2025-06-01",
+      duration: 2,
+      parent: 2,
+      open: true,
+      baselines: [
+        { text: "План A", start_date: "2025-05-30", duration: 2 },
+        { text: "План B", start_date: "2025-05-31", duration: 2 }
+      ]
     },
     { id: 4, text: "Дизайнер Аня — 8 часов", type: "assignment", start_date: "2025-06-01", duration: 1, parent: 3 },
     { id: 5, text: "Дизайнер Борис — 6 часов", type: "assignment", start_date: "2025-06-01", duration: 1, parent: 3 },
@@ -183,13 +222,11 @@ gantt.parse({
       id: 6, text: "Создать макеты экрана регистрации", type: "task", start_date: "2025-06-02", duration: 2, parent: 2, open: true
     },
     { id: 7, text: "Дизайнер Аня — 16 часов", type: "assignment", start_date: "2025-06-02", duration: 2, parent: 6 },
-
     {
       id: 8, text: "Разработка", type: "phase", start_date: "2025-06-06", duration: 7, parent: 1, open: true
     },
     { id: 9, text: "Разработка экрана входа", type: "task", start_date: "2025-06-06", duration: 3, parent: 8 },
     { id: 10, text: "Разработка экрана регистрации", type: "task", start_date: "2025-06-09", duration: 3, parent: 8 },
-
     {
       id: 11, text: "Тестирование", type: "phase", start_date: "2025-06-13", duration: 3, parent: 1, open: true
     },
