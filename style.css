@@ -1,30 +1,17 @@
-.type_project .gantt_task_progress {
-  background-color: #2a9d8f !important; 
-}
-
 .type_project .gantt_task_content {
   background-color: #264653 !important; 
 }
 
-.type_phase .gantt_task_progress {
-  background-color: #e76f51 !important; 
-}
 
 .type_phase .gantt_task_content {
   background-color: #f4a261 !important; 
 }
 
-.type_task .gantt_task_progress {
-  background-color: #0077b6 !important; 
-}
 
 .type_task .gantt_task_content {
   background-color: #00b4d8 !important; 
 }
 
-.type_assignment .gantt_task_progress {
-  background-color: #8d99ae !important; 
-}
 
 .type_assignment .gantt_task_content {
   background-color: #6c757d !important; 
@@ -54,7 +41,6 @@
 }
 
 .gantt_modal_box input[type="text"],
-.gantt_modal_box input[type="number"],
 .gantt_modal_box select {
   width: 100%;
   padding: 8px 10px;
@@ -68,7 +54,6 @@
 }
 
 .gantt_modal_box input[type="text"]:focus,
-.gantt_modal_box input[type="number"]:focus,
 .gantt_modal_box select:focus {
   border-color: #666;
   outline: none;

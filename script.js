@@ -1,9 +1,9 @@
 gantt.config.date_format = "%Y-%m-%d";
 
 gantt.config.columns = [
-  { name: "text", label: "Name", tree: true, width: '*' },
-  { name: "start_date", label: "Start", align: "center" },
-  { name: "end_date", label: "End", align: "center" }
+  { name: "text", label: "Name", tree: true, width: 300 }, 
+  { name: "start_date", label: "Start", align: "center", width: 100 }, 
+  { name: "end_date", label: "End", align: "center", width: 100 } 
 ];
 
 gantt.types = {
@@ -68,7 +68,7 @@ gantt.showLightbox = function(id) {
     const resource = form.querySelector("#new_task_resource").value.trim();
 
     if (!text || !startStr || !endStr) {
-      gantt.message({ type: "error", text: "Please fill in all fields: Name, Start, and End" });
+      gantt.message({ type: "error", text: "Please fill in all fields" });
       return;
     }
 
