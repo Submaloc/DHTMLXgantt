@@ -1,9 +1,21 @@
-gantt.config.date_format = "%Y-%m-%d";
+gantt.config.date_format = "%m-%d-%Y";
+
+gantt.templates.date_grid = function(date) {
+  return gantt.date.date_to_str("%m-%d-%Y")(date);
+};
+
+gantt.config.baselines = {
+  datastore: "baselines",
+  render_mode: "separateRow",
+  dataprocessor_baselines: false,
+  row_height: 16,
+  bar_height: 8
+};
 
 gantt.config.columns = [
-  { name: "text", label: "Name", tree: true, width: 300 }, 
-  { name: "start_date", label: "Start", align: "center", width: 100 }, 
-  { name: "end_date", label: "End", align: "center", width: 100 } 
+  { name: "text", label: "Name", tree: true, width: 300 },
+  { name: "start_date", label: "Start", align: "center", width: 100 },
+  { name: "end_date", label: "End", align: "center", width: 100 }
 ];
 
 gantt.types = {
@@ -39,24 +51,27 @@ gantt.showLightbox = function(id) {
 
   const form = document.createElement("div");
   form.className = "gantt_modal_box";
-  form.innerHTML =
-    `<label>Type:</label>
-     <select id="new_task_type">${typeOptions}</select>
+  form.innerHTML = `
+    <label>Type:</label>
+    <select id="new_task_type">${typeOptions}</select>
 
-     <label>Name:</label>
-     <input type="text" id="new_task_text">
+    <label>Start Date (mm-dd-yyyy):</label>
+    <input type="text" id="new_task_start">
 
-     <label>Task start (yyyy-mm-dd):</label>
-     <input type="text" id="new_task_start" placeholder="2025-06-01">
+    <label>End Date (mm-dd-yyyy):</label>
+    <input type="text" id="new_task_end">
 
-     <label>Task end (yyyy-mm-dd):</label>
-     <input type="text" id="new_task_end" placeholder="2025-06-03">
+    <label>Resource:</label>
+    <input type="text" id="new_task_resource">
 
-     <label>Resource:</label>
-     <input type="text" id="new_task_resource" placeholder="John Smith">
+    <label>Title:</label>
+    <input type="text" id="new_task_text">
 
-     <button id="create_task_btn">Create</button>
-     <button id="cancel_task_btn">Cancel</button>`;
+    <button id="create_task_btn">Create</button>
+    <button id="cancel_task_btn">Cancel</button>
+    <button id="delete_task_btn">Delete</button>
+    <button id="clear_fields_btn">Clear</button>
+  `;
 
   document.body.appendChild(form);
 
@@ -72,18 +87,16 @@ gantt.showLightbox = function(id) {
       return;
     }
 
-    const startDate = gantt.date.parseDate(startStr, gantt.config.date_format);
-    const endDate = gantt.date.parseDate(endStr, gantt.config.date_format);
+    const parseDate = gantt.date.str_to_date("%m-%d-%Y");
+    const startDate = parseDate(startStr);
+    const endDate = parseDate(endStr);
 
     if (!startDate || !endDate || startDate >= endDate) {
       gantt.message({ type: "error", text: "Invalid dates" });
       return;
     }
 
-    const duration = gantt.calculateDuration({
-      start_date: startDate,
-      end_date: endDate
-    });
+    const duration = gantt.calculateDuration({ start_date: startDate, end_date: endDate });
 
     const newTask = {
       id: gantt.uid(),
@@ -100,6 +113,21 @@ gantt.showLightbox = function(id) {
   };
 
   form.querySelector("#cancel_task_btn").onclick = () => form.remove();
+
+  form.querySelector("#delete_task_btn").onclick = () => {
+    if (confirm("Are you sure you want to delete this task?")) {
+      gantt.deleteTask(id);
+      form.remove();
+    }
+  };
+
+  form.querySelector("#clear_fields_btn").onclick = () => {
+    form.querySelector("#new_task_type").selectedIndex = 0;
+    form.querySelector("#new_task_start").value = "";
+    form.querySelector("#new_task_end").value = "";
+    form.querySelector("#new_task_resource").value = "";
+    form.querySelector("#new_task_text").value = "";
+  };
 };
 
 gantt.attachEvent("onBeforeTaskAdd", function(id, task) {
@@ -134,29 +162,48 @@ gantt.templates.columns["end_date"] = function(task) {
   return "";
 };
 
-let syncAssignmentsOnDrag = true;
+let syncAssignmentsOnResize = true;
 
 const toggleButton = document.createElement("button");
 toggleButton.textContent = "Assignment Sync: ON";
 toggleButton.className = "btn-sync-toggle";
 toggleButton.onclick = () => {
-  syncAssignmentsOnDrag = !syncAssignmentsOnDrag;
-  toggleButton.textContent = `Assignment Sync: ${syncAssignmentsOnDrag ? "ON" : "OFF"}`;
+  syncAssignmentsOnResize = !syncAssignmentsOnResize;
+  toggleButton.textContent = `Assignment Sync: ${syncAssignmentsOnResize ? "ON" : "OFF"}`;
 };
 document.body.appendChild(toggleButton);
 
 gantt.attachEvent("onTaskDrag", function(id, mode, task, original) {
-  if (!syncAssignmentsOnDrag || mode !== "move") return true;
+  if (!syncAssignmentsOnResize) return true;
+  if (task.type !== gantt.types.assignment) return true;
 
-  const diff = task.start_date - original.start_date;
+  function updateParentDates(taskId) {
+    const parent = gantt.getTask(taskId);
+    if (!parent) return;
 
-  if (task.type !== gantt.types.assignment) {
-    gantt.eachTask(function(child) {
-      if (child.type === gantt.types.assignment && gantt.isChildOf(child.id, task.id)) {
-        child.start_date = new Date(+child.start_date + diff);
-        gantt.updateTask(child.id);
+    const children = gantt.getChildren(taskId)
+      .map(cid => gantt.getTask(cid))
+      .filter(Boolean);
+
+    if (children.length === 0) return;
+
+    const minDate = new Date(Math.min(...children.map(t => t.start_date.getTime())));
+    const maxDate = new Date(Math.max(...children.map(t => t.end_date.getTime())));
+
+    if (parent.start_date.getTime() !== minDate.getTime() || parent.end_date.getTime() !== maxDate.getTime()) {
+      parent.start_date = minDate;
+      parent.end_date = maxDate;
+      parent.duration = gantt.calculateDuration(parent);
+      gantt.updateTask(parent.id);
+
+      if (parent.parent) {
+        updateParentDates(parent.parent);
       }
-    });
+    }
+  }
+
+  if (task.parent) {
+    updateParentDates(task.parent);
   }
 
   return true;
@@ -200,39 +247,39 @@ gantt.init("gantt_here");
 gantt.parse({
   data: [
     {
-      id: 1, text: "Mobile App Launch", type: "project", start_date: "2025-06-01", end_date: "2025-06-21", open: true
+      id: 1, text: "Mobile App Launch", type: "project", start_date: "06-01-2025", end_date: "06-21-2025", open: true
     },
     {
-      id: 2, text: "UI/UX Design", type: "phase", start_date: "2025-06-01", end_date: "2025-06-06", parent: 1, open: true
+      id: 2, text: "UI/UX Design", type: "phase", start_date: "06-01-2025", end_date: "06-06-2025", parent: 1, open: true
     },
     {
       id: 3,
       text: "Create login screen mockups",
       type: "task",
-      start_date: "2025-06-01",
-      end_date: "2025-06-03",
+      start_date: "06-01-2025",
+      end_date: "06-03-2025",
       parent: 2,
       open: true,
       baselines: [
-        { text: "Plan A", start_date: "2025-05-30", duration: 2 },
-        { text: "Plan B", start_date: "2025-05-31", duration: 2 }
+        { text: "Plan A", start_date: "05-30-2025", duration: 2 },
+        { text: "Plan B", start_date: "05-31-2025", duration: 2 }
       ]
     },
-    { id: 4, text: "Designer Anna — 8 hours", type: "assignment", start_date: "2025-06-01", end_date: "2025-06-02", parent: 3 },
-    { id: 5, text: "Designer Boris — 6 hours", type: "assignment", start_date: "2025-06-01", end_date: "2025-06-02", parent: 3 },
+    { id: 4, text: "Designer Anna — 8 hours", type: "assignment", start_date: "06-01-2025", end_date: "06-02-2025", parent: 3 },
+    { id: 5, text: "Designer Boris — 6 hours", type: "assignment", start_date: "06-01-2025", end_date: "06-02-2025", parent: 3 },
     {
-      id: 6, text: "Create registration screen mockups", type: "task", start_date: "2025-06-02", end_date: "2025-06-04", parent: 2, open: true
+      id: 6, text: "Create registration screen mockups", type: "task", start_date: "06-02-2025", end_date: "06-04-2025", parent: 2, open: true
     },
-    { id: 7, text: "Designer Anna — 16 hours", type: "assignment", start_date: "2025-06-02", end_date: "2025-06-04", parent: 6 },
+    { id: 7, text: "Designer Anna — 16 hours", type: "assignment", start_date: "06-02-2025", end_date: "06-04-2025", parent: 6 },
     {
-      id: 8, text: "Development", type: "phase", start_date: "2025-06-06", end_date: "2025-06-13", parent: 1, open: true
+      id: 8, text: "Development", type: "phase", start_date: "06-06-2025", end_date: "06-13-2025", parent: 1, open: true
     },
-    { id: 9, text: "Login screen development", type: "task", start_date: "2025-06-06", end_date: "2025-06-09", parent: 8 },
-    { id: 10, text: "Registration screen development", type: "task", start_date: "2025-06-09", end_date: "2025-06-12", parent: 8 },
+    { id: 9, text: "Login screen development", type: "task", start_date: "06-06-2025", end_date: "06-09-2025", parent: 8 },
+    { id: 10, text: "Registration screen development", type: "task", start_date: "06-09-2025", end_date: "06-12-2025", parent: 8 },
     {
-      id: 11, text: "Testing", type: "phase", start_date: "2025-06-13", end_date: "2025-06-16", parent: 1, open: true
+      id: 11, text: "Testing", type: "phase", start_date: "06-13-2025", end_date: "06-16-2025", parent: 1, open: true
     },
-    { id: 12, text: "Screen testing", type: "task", start_date: "2025-06-13", end_date: "2025-06-15", parent: 11, open: true },
-    { id: 13, text: "Tester Irina — 20 hours", type: "assignment", start_date: "2025-06-13", end_date: "2025-06-16", parent: 12 }
+    { id: 12, text: "Screen testing", type: "task", start_date: "06-13-2025", end_date: "06-15-2025", parent: 11, open: true },
+    { id: 13, text: "Tester Irina — 20 hours", type: "assignment", start_date: "06-13-2025", end_date: "06-16-2025", parent: 12 }
   ]
 });

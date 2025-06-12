@@ -69,6 +69,8 @@
   font-weight: 600;
   transition: background-color 0.2s ease, border-color 0.2s ease;
   margin-right: 12px;
+  margin-top: 20px;
+  width: 90px; 
 }
 
 .gantt_modal_box button:hover {
@@ -78,6 +80,7 @@
 
 .gantt_modal_box button:focus {
   outline: 2px solid #999;
+  
 }
 
 .gantt_modal_box button:last-child {
@@ -108,9 +111,15 @@
 }
 
 .btn-convert-baseline {
-  top: 50px;
+  top: 40px;
   left: 10px;
   background: #28a745;
 }
+
+
+
+
+
+
 
 
